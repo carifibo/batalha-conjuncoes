@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Batalha das Conjunções</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0e17;--surface:#1c1b2e;--card:#252440;--c1:#ff6b6b;--c2:#ffd93d;--c3:#6bcb77;--c4:#4d96ff;--text:#fffffe;--muted:#a7a9be;--border:rgba(255,255,255,0.09);--r:14px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+h1,h2,h3{font-family:'Syne',sans-serif}
+.screen{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:2rem 1rem}
+.screen.active{display:flex}
+.btn{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;padding:.75rem 2rem;border-radius:999px;border:none;cursor:pointer;transition:transform .1s}
+.btn:active{transform:scale(.97)}
+.btn-yellow{background:var(--c2);color:#1a1000}
+.btn-green{background:var(--c3);color:#0a200d}
+.btn-red{background:var(--c1);color:#2a0505}
+.btn-ghost{background:rgba(255,255,255,.07);color:var(--text)}
+.field{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:.65rem 1rem;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;transition:border-color .15s}
+.field:focus{border-color:rgba(255,255,255,.4)}
+label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:.3rem}
+.divider{width:100%;height:1px;background:var(--border);margin:1rem 0}
+
+/* ── FIREBASE SETUP ── */
+.setup-box{width:100%;max-width:560px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem}
+.inst-step{display:flex;gap:.75rem;margin-bottom:.9rem;align-items:flex-start}
+.inst-num{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;flex-shrink:0;margin-top:.1rem}
+.inst-text{font-size:.87rem;color:var(--muted);line-height:1.65}
+.inst-text b{color:var(--text)}
+.inst-text code{background:rgba(255,255,255,.08);border-radius:4px;padding:.1rem .4rem;font-size:.82rem;font-family:monospace;color:var(--c2)}
+.cfg-grid{display:grid;gap:.65rem}
+.tag{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,217,61,.1);border:1px solid rgba(255,217,61,.25);border-radius:999px;padding:.25rem .8rem;font-size:.78rem;color:var(--c2);font-weight:600;margin-bottom:.9rem}
+
+/* ── ROLE ── */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;width:100%;max-width:420px;margin:1.5rem auto 0}
+.role-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:1.5rem;cursor:pointer;text-align:center;transition:border-color .15s,transform .1s}
+.role-card:hover{border-color:rgba(255,255,255,.3);transform:translateY(-2px)}
+
+/* ── TEACHER SETUP ── */
+.tsetup-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;width:100%;margin:1rem 0}
+.tsetup-row{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:.85rem 1rem;display:flex;align-items:center;gap:.75rem}
+.tdot{width:13px;height:13px;border-radius:50%;flex-shrink:0}
+.tinput{flex:1;background:transparent;border:none;font-family:'DM Sans',sans-serif;font-size:.95rem;color:var(--text);outline:none}
+.mpill{background:var(--card);border:1.5px solid var(--border);border-radius:999px;padding:.3rem .9rem;font-size:.83rem;cursor:pointer;color:var(--muted)}
+.mpill.on{background:rgba(255,217,61,.1);border-color:var(--c2);color:var(--c2)}
+
+/* ── LOBBY ── */
+.litem{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:.8rem 1.2rem;display:flex;align-items:center;gap:.75rem;transition:border-color .3s}
+.ldot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* ── DASH ── */
+.dash-wrap{width:100%;max-width:1100px;display:grid;grid-template-columns:1fr 1.9fr;gap:1rem}
+.score-col{display:flex;flex-direction:column;gap:.55rem}
+.glcard{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:.85rem 1.1rem;display:flex;align-items:center;gap:.8rem;transition:all .3s}
+.glcard.ans{border-color:rgba(107,203,119,.5);background:rgba(107,203,119,.04)}
+.gl-name{flex:1;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700}
+.gl-score{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800}
+.ba{font-size:.74rem;padding:.18rem .55rem;border-radius:999px;background:rgba(107,203,119,.15);color:var(--c3)}
+.bw{font-size:.74rem;padding:.18rem .55rem;border-radius:999px;background:rgba(255,255,255,.06);color:var(--muted)}
+.qpanel{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:1.4rem;display:flex;flex-direction:column;gap:.85rem}
+.qbadge{background:rgba(255,255,255,.07);border-radius:999px;padding:.18rem .65rem;font-size:.74rem;color:var(--muted)}
+.dopts{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+.dopt{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:.55rem .85rem;font-size:.84rem;display:flex;gap:.5rem;align-items:center}
+.dopt.ok{border-color:rgba(107,203,119,.6);background:rgba(107,203,119,.08);color:var(--c3)}
+.let{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.76rem;font-weight:700;flex-shrink:0}
+
+
+
+/* ── GROUP GAME ── */
+.gheader{width:100%;max-width:700px;display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.qcard{width:100%;max-width:700px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:1.7rem;margin-bottom:1rem}
+.qtxt{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:600;line-height:1.5}
+.qsent{background:rgba(77,150,255,.07);border-left:3px solid var(--c4);border-radius:0 8px 8px 0;padding:.65rem 1rem;font-size:.92rem;font-style:italic;margin:1rem 0}
+.hi{color:var(--c2);font-style:normal;font-weight:700}
+.opts{width:100%;max-width:700px;display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem}
+.obtn{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:.9rem 1.1rem;font-family:'DM Sans',sans-serif;font-size:.93rem;color:var(--text);cursor:pointer;text-align:left;display:flex;align-items:center;gap:.65rem;transition:all .15s}
+.obtn:hover:not(:disabled){border-color:rgba(255,255,255,.3)}
+.obtn:disabled{cursor:default}
+.obtn.ok2{border-color:rgba(107,203,119,.7);background:rgba(107,203,119,.1);color:var(--c3)}
+.obtn.err2{border-color:rgba(255,107,107,.6);background:rgba(255,107,107,.07);color:#ff8a8a}
+.olet{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;flex-shrink:0}
+
+/* ── FEEDBACK ── */
+.fb{width:100%;max-width:700px;border-radius:var(--r);padding:.85rem 1.1rem;font-size:.88rem;display:none;gap:.6rem;margin-bottom:.5rem;align-items:flex-start}
+.fb.show{display:flex}
+.fb.ok{background:rgba(107,203,119,.1);border:1px solid rgba(107,203,119,.3);color:#6bcb77}
+.fb.err{background:rgba(255,107,107,.09);border:1px solid rgba(255,107,107,.25);color:#ff8a8a}
+.fb.info{background:rgba(77,150,255,.09);border:1px solid rgba(77,150,255,.2);color:#7dbdff}
+
+/* ── PROGRESS ── */
+.pdots{display:flex;gap:.4rem}
+.pd{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15)}
+.pd.d{background:var(--c3)}
+.pd.c{background:var(--c2)}
+
+/* ── LOBBY PULSE ── */
+.pulse{width:14px;height:14px;border-radius:50%;animation:pu 1.4s ease infinite}
+@keyframes pu{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+
+/* ── FINAL ── */
+.fcards{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;width:100%;max-width:860px;margin:1.5rem auto}
+.fcard{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:1.2rem;text-align:center}
+
+/* ── PLUS ANIM ── */
+.pp{position:fixed;font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--c2);pointer-events:none;animation:fu .9s ease forwards;z-index:999}
+@keyframes fu{0%{opacity:1;transform:translateY(0)scale(1)}100%{opacity:0;transform:translateY(-70px)scale(1.3)}}
+
+/* ── CONN BAR ── */
+.cbar{position:fixed;top:0;left:0;right:0;padding:.4rem 1rem;font-size:.8rem;text-align:center;z-index:100;display:none;background:rgba(255,107,107,.15);color:var(--c1);border-bottom:1px solid rgba(255,107,107,.2)}
+
+@media(max-width:640px){
+  .dash-wrap{grid-template-columns:1fr}
+  .opts,.dopts,.fcards,.role-grid,.tsetup-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="cbar" id="cbar">⚠ Sem conexão com o servidor — verifique sua internet</div>
+
+<!-- ═══ TELA 1: FIREBASE CONFIG ═══ -->
+<div class="screen active" id="s-firebase">
+<div style="max-width:570px;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center;gap:1rem;padding-top:1rem">
+  <div style="text-align:center">
+    <div style="font-size:2rem;margin-bottom:.4rem">🔥</div>
+    <h2 style="font-size:1.5rem">Configurar Firebase</h2>
+    <p style="color:var(--muted);font-size:.85rem;margin-top:.3rem">Faça isso uma vez. As mesmas credenciais vão em <b>todos</b> os dispositivos.</p>
+  </div>
+  <div class="setup-box">
+    <div class="tag">📋 Como obter as credenciais — 3 passos</div>
+    <div class="inst-step">
+      <div class="inst-num">1</div>
+      <div class="inst-text">Acesse <b>console.firebase.google.com</b> → <b>"Criar um projeto"</b>. Dê qualquer nome e desative o Google Analytics.</div>
+    </div>
+    <div class="inst-step">
+      <div class="inst-num">2</div>
+      <div class="inst-text">No menu lateral: <b>Criação → Realtime Database → Criar banco de dados</b>. Escolha qualquer região e selecione <b>"Modo de teste"</b>.</div>
+    </div>
+    <div class="inst-step">
+      <div class="inst-num">3</div>
+      <div class="inst-text">Volte ao menu lateral → engrenagem → <b>Configurações do projeto</b>. Desça até "Seus aplicativos" → clique em <b>&lt;/&gt; Web</b> → registre o app → copie os valores do <code>firebaseConfig</code> abaixo.</div>
+    </div>
+    <div class="divider"></div>
+    <div class="cfg-grid">
+      <div><label>apiKey</label><input class="field" id="f-apiKey" placeholder="AIzaSy..."></div>
+      <div><label>authDomain</label><input class="field" id="f-authDomain" placeholder="meu-projeto.firebaseapp.com"></div>
+      <div><label>databaseURL</label><input class="field" id="f-databaseURL" placeholder="https://meu-projeto-default-rtdb.firebaseio.com"></div>
+      <div><label>projectId</label><input class="field" id="f-projectId" placeholder="meu-projeto"></div>
+      <div><label>storageBucket</label><input class="field" id="f-storageBucket" placeholder="meu-projeto.appspot.com"></div>
+      <div><label>messagingSenderId</label><input class="field" id="f-messagingSenderId" placeholder="123456789012"></div>
+      <div><label>appId</label><input class="field" id="f-appId" placeholder="1:123...:web:abc..."></div>
+    </div>
+    <p id="cfg-err" style="color:var(--c1);font-size:.82rem;margin-top:.5rem;display:none">⚠ Preencha todos os campos.</p>
+    <div style="display:flex;gap:.75rem;margin-top:1.1rem;flex-wrap:wrap">
+      <button class="btn btn-yellow" onclick="initFirebase()" style="flex:1">Conectar e continuar →</button>
+      <button class="btn btn-ghost" onclick="loadSaved()" title="Carregar config salva">↩ Usar salvo</button>
+    </div>
+    <p style="font-size:.75rem;color:var(--muted);margin-top:.55rem">As credenciais são salvas no <b>localStorage</b> deste navegador.</p>
+  </div>
+</div>
+</div>
+
+<!-- ═══ TELA 2: PAPEL ═══ -->
+<div class="screen" id="s-land">
+  <div style="max-width:480px;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:.4rem">📡</div>
+    <h1 style="font-size:2.4rem;margin-bottom:.5rem">Batalha das<br><span style="color:var(--c2)">Conjunções</span></h1>
+    <p style="color:var(--muted);line-height:1.7;margin-bottom:.4rem">Quem é você nesta sessão?</p>
+    <div id="sess-label" style="font-size:.75rem;color:var(--muted);opacity:.6;margin-bottom:1.2rem"></div>
+    <div class="role-grid">
+      <div class="role-card" onclick="chooseRole('teacher')">
+        <div style="font-size:2rem;margin-bottom:.6rem">🖥️</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700">Professor</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:.25rem">Controla o jogo</div>
+      </div>
+      <div class="role-card" onclick="chooseRole('group')">
+        <div style="font-size:2rem;margin-bottom:.6rem">👥</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700">Grupo</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:.25rem">Responde as perguntas</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" onclick="showScreen('s-firebase')" style="margin-top:1.5rem;font-size:.8rem;opacity:.55">Reconfigurar Firebase</button>
+  </div>
+</div>
+
+<!-- ═══ TELA 3: PROFESSOR SETUP ═══ -->
+<div class="screen" id="s-tsetup">
+  <div style="max-width:540px;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center">
+    <h2 style="font-size:1.45rem;margin-bottom:.25rem">Configurar jogo</h2>
+    <p style="color:var(--muted);font-size:.87rem;margin-bottom:1.1rem">Nomeie os grupos — use os mesmos nomes das salas do Meet</p>
+    <div class="tsetup-grid">
+      <div class="tsetup-row"><div class="tdot" style="background:var(--c1)"></div><input class="tinput" id="gn0" placeholder="Grupo 1" maxlength="20"></div>
+      <div class="tsetup-row"><div class="tdot" style="background:var(--c2)"></div><input class="tinput" id="gn1" placeholder="Grupo 2" maxlength="20"></div>
+      <div class="tsetup-row"><div class="tdot" style="background:var(--c3)"></div><input class="tinput" id="gn2" placeholder="Grupo 3" maxlength="20"></div>
+      <div class="tsetup-row"><div class="tdot" style="background:var(--c4)"></div><input class="tinput" id="gn3" placeholder="Grupo 4" maxlength="20"></div>
+    </div>
+    <div class="divider"></div>
+    <p style="color:var(--muted);font-size:.83rem;margin-bottom:.6rem">Modo:</p>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem">
+      <span class="mpill" data-mode="all" onclick="setMode(this)">Todas (18 q)</span>
+      <span class="mpill" data-mode="coord" onclick="setMode(this)">Coordenativas</span>
+      <span class="mpill" data-mode="sub" onclick="setMode(this)">Subordinativas</span>
+      <span class="mpill on" data-mode="quick" onclick="setMode(this)">Rápido (10 q)</span>
+    </div>
+    <div style="display:flex;gap:.75rem">
+      <button class="btn btn-yellow" onclick="teacherCreate()" style="flex:1">Criar sala →</button>
+      <button class="btn btn-ghost" onclick="showScreen('s-land')">Voltar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TELA 4: PROFESSOR LOBBY ═══ -->
+<div class="screen" id="s-tlobby">
+  <div style="max-width:520px;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center">
+    <div style="font-size:2.2rem;margin-bottom:.5rem">⏳</div>
+    <h2 style="font-size:1.45rem;margin-bottom:.35rem">Aguardando grupos...</h2>
+    <p style="color:var(--muted);font-size:.87rem;margin-bottom:1.3rem">Compartilhe o arquivo com os grupos. Cada sala abre e escolhe o seu grupo.</p>
+    <div id="lobby-list" style="display:flex;flex-direction:column;gap:.55rem;margin-bottom:1.3rem"></div>
+    <button class="btn btn-green" onclick="teacherStart()" style="font-size:1rem;padding:.85rem 2rem">▶ Iniciar jogo</button>
+    <p style="color:var(--muted);font-size:.76rem;margin-top:.55rem">Pode iniciar mesmo sem todos conectados</p>
+  </div>
+</div>
+
+<!-- ═══ TELA 5: PROFESSOR DASHBOARD ═══ -->
+<div class="screen" id="s-tdash">
+  <div style="width:100%;max-width:1100px;display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem">
+    <span style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;opacity:.55">BATALHA DAS CONJUNÇÕES</span>
+    <div style="display:flex;align-items:center;gap:.65rem">
+      <div class="pdots" id="dash-prog"></div>
+      <span style="font-size:.82rem;color:var(--muted);font-family:'Syne',sans-serif;font-weight:700" id="dash-ql">Q 1/10</span>
+    </div>
+  </div>
+  <div class="dash-wrap">
+    <div class="score-col" id="score-col"></div>
+    <div class="qpanel">
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <span class="qbadge" id="dp-cat"></span>
+        <span style="font-size:.74rem;color:var(--c2)" id="dp-pts"></span>
+      </div>
+
+      <div style="font-family:'Syne',sans-serif;font-size:1.12rem;font-weight:600;line-height:1.5" id="dp-text"></div>
+      <div class="qsent" id="dp-sent" style="display:none"></div>
+      <div class="dopts" id="dp-opts"></div>
+      <div class="divider" style="margin:.3rem 0"></div>
+      <div style="display:flex;gap:.65rem;flex-wrap:wrap">
+        <button class="btn btn-green" id="btn-nxt" onclick="teacherNext()">Revelar / Próxima ›</button>
+        <button class="btn btn-red" onclick="if(confirm('Encerrar o jogo?'))teacherEnd()">Encerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TELA 6: GRUPO PICK ═══ -->
+<div class="screen" id="s-gpick">
+  <div style="max-width:500px;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center">
+    <h2 style="font-size:1.35rem;text-align:center;margin-bottom:.25rem">Qual é o seu grupo?</h2>
+    <p style="color:var(--muted);text-align:center;font-size:.86rem;margin-bottom.4rem">Selecione o que o professor atribuiu à sua sala</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1.1rem" id="gpick-grid"></div>
+    <button class="btn btn-ghost" onclick="showScreen('s-land')" style="align-self:center;margin-top:1rem">Voltar</button>
+  </div>
+</div>
+
+<!-- ═══ TELA 7: GRUPO LOBBY ═══ -->
+<div class="screen" id="s-globby">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;text-align:center">
+    <div class="pulse" id="lobby-pulse" style="background:var(--c2)"></div>
+    <h2 style="font-size:1.45rem" id="lobby-gname">Grupo 1</h2>
+    <p style="color:var(--muted)">Aguardando o professor iniciar o jogo...</p>
+    <p style="font-size:.76rem;color:var(--muted);opacity:.6">Esta tela atualiza automaticamente via Firebase</p>
+  </div>
+</div>
+
+<!-- ═══ TELA 8: GRUPO JOGO ═══ -->
+<div class="screen" id="s-ggame">
+  <div class="gheader">
+    <div>
+      <div style="font-size:.8rem;font-weight:600" id="gg-glabel">Grupo</div>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-top:.2rem">
+        <div class="pdots" id="gg-prog"></div>
+        <span style="font-size:.78rem;color:var(--muted)" id="gg-ql">Q 1/10</span>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:.74rem;color:var(--muted)">Pontuação</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--c2)" id="gg-score">0</div>
+    </div>
+  </div>
+  <div class="qcard">
+    <div style="display:flex;gap:.5rem;margin-bottom:.65rem">
+      <span style="background:rgba(255,255,255,.07);border-radius:999px;padding:.18rem .65rem;font-size:.74rem;color:var(--muted)" id="gg-cat"></span>
+      <span style="font-size:.74rem;color:var(--c2)" id="gg-pts"></span>
+    </div>
+
+    <div class="qtxt" id="gg-text"></div>
+    <div class="qsent" id="gg-sent" style="display:none"></div>
+  </div>
+  <div class="fb" id="gg-fb"><span id="gg-fbi"></span><div id="gg-fbt"></div></div>
+  <div class="opts" id="gg-opts"></div>
+  <div id="gg-wait" style="display:none;color:var(--muted);font-size:.84rem;text-align:center;padding:.5rem">⏳ Aguardando o professor avançar...</div>
+</div>
+
+<!-- ═══ TELA 9: FINAL ═══ -->
+<div class="screen" id="s-final">
+  <div style="text-align:center;max-width:900px;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div style="font-size:2.5rem;margin-bottom:.3rem">🏆</div>
+    <h1 style="font-size:2rem;margin-bottom:.35rem">Resultado final!</h1>
+    <p style="color:var(--muted);margin-bottom:1.3rem">Batalha das Conjunções encerrada</p>
+    <div class="fcards" id="fcards"></div>
+    <button class="btn btn-yellow" onclick="location.reload()" style="margin:1.4rem auto 0;display:block">Novo jogo</button>
+  </div>
+</div>
+
+<script>
+/* ══ DATA ══ */
+const COLORS=['#ff6b6b','#ffd93d','#6bcb77','#4d96ff'];
+const ALL_Q=[
+  {cat:'Coordenativas',pts:1,sentence:'Maria estuda muito, <b>mas</b> ainda tem dificuldades.',text:'A conjunção <span class="hi">mas</span> é:',opts:['Adversativa','Aditiva','Conclusiva','Alternativa'],ans:0,exp:'<b>Mas</b> é adversativa — indica contraste entre as orações.'},
+  {cat:'Coordenativas',pts:1,sentence:'Ele estudou muito, <b>portanto</b> passou na prova.',text:'A conjunção <span class="hi">portanto</span> é:',opts:['Aditiva','Explicativa','Conclusiva','Adversativa'],ans:2,exp:'<b>Portanto</b> é conclusiva — a 2ª oração é consequência da 1ª.'},
+  {cat:'Coordenativas',pts:1,sentence:'Gosto de ler <b>e</b> de escrever todos os dias.',text:'A conjunção <span class="hi">e</span> é:',opts:['Alternativa','Aditiva','Adversativa','Conclusiva'],ans:1,exp:'<b>E</b> é aditiva — acrescenta informação ou une termos.'},
+  {cat:'Coordenativas',pts:1,sentence:'Não demore, <b>pois</b> o filme já vai começar.',text:'A conjunção <span class="hi">pois</span> nessa frase é:',opts:['Conclusiva','Explicativa','Adversativa','Alternativa'],ans:1,exp:'<b>Pois</b> antes do verbo é explicativa — justifica a ideia anterior.'},
+  {cat:'Coordenativas',pts:1,sentence:'<b>Ou</b> você estuda agora, <b>ou</b> terá dificuldades.',text:'A conjunção <span class="hi">ou...ou</span> é:',opts:['Aditiva','Adversativa','Alternativa','Conclusiva'],ans:2,exp:'<b>Ou...ou</b> é alternativa — indica escolha ou alternância.'},
+  {cat:'Subordinativas',pts:2,sentence:'Ele não fez a pesquisa <b>porque</b> não tinha materiais.',text:'A conjunção <span class="hi">porque</span> é:',opts:['Temporal','Causal','Concessiva','Condicional'],ans:1,exp:'<b>Porque</b> é causal — apresenta a causa da ação da principal.'},
+  {cat:'Subordinativas',pts:2,sentence:'<b>Embora</b> chovesse, fomos à aula.',text:'A conjunção <span class="hi">embora</span> é:',opts:['Causal','Condicional','Temporal','Concessiva'],ans:3,exp:'<b>Embora</b> é concessiva — ideia contrária que não impede a realização.'},
+  {cat:'Subordinativas',pts:2,sentence:'<b>Se</b> você estudar bastante, entenderá a matéria.',text:'A conjunção <span class="hi">se</span> é:',opts:['Causal','Condicional','Temporal','Conformativa'],ans:1,exp:'<b>Se</b> é condicional — indica hipótese para a realização da principal.'},
+  {cat:'Subordinativas',pts:2,sentence:'A briga começou <b>assim que</b> saímos da festa.',text:'A locução <span class="hi">assim que</span> é:',opts:['Final','Comparativa','Temporal','Consecutiva'],ans:2,exp:'<b>Assim que</b> é temporal — indica circunstância de tempo.'},
+  {cat:'Subordinativas',pts:2,sentence:'Estude bastante <b>para que</b> possa tirar boas notas.',text:'A locução <span class="hi">para que</span> é:',opts:['Causal','Final','Proporcional','Condicional'],ans:1,exp:'<b>Para que</b> é final — expressa a finalidade da ação.'},
+  {cat:'Identificação',pts:1,sentence:'O aluno chegou cedo, <b>contudo</b> perdeu a chamada.',text:'A conjunção destacada é:',opts:['Coord. adversativa','Sub. condicional','Coord. conclusiva','Sub. causal'],ans:0,exp:'<b>Contudo</b> é coordenativa adversativa — equivale a "mas".'},
+  {cat:'Identificação',pts:1,sentence:'Espero <b>que</b> você volte logo.',text:'A conjunção <span class="hi">que</span> é:',opts:['Coord. aditiva','Sub. integrante','Sub. concessiva','Coord. explicativa'],ans:1,exp:'<b>Que</b> introduz subordinada substantiva — é integrante.'},
+  {cat:'Complete',pts:2,sentence:'Ela se preparou muito; _______, não ficou nervosa.',text:'Qual conjunção expressa CONCLUSÃO?',opts:['Embora','Portanto','Ainda que','Quando'],ans:1,exp:'<b>Portanto</b> é conclusiva — consequência da preparação.'},
+  {cat:'Complete',pts:2,sentence:'_______ fosse tarde, fomos visitá-lo.',text:'Qual conjunção expressa CONCESSÃO?',opts:['Se','Porque','Embora','Logo que'],ans:2,exp:'<b>Embora</b> é concessiva — ideia contrária que não impede a ação.'},
+  {cat:'Complete',pts:2,sentence:'_______ precisar de ajuda, pode me ligar.',text:'Qual conjunção expressa CONDIÇÃO?',opts:['Embora','Assim que','Porque','Se'],ans:3,exp:'<b>Se</b> é condicional — hipótese para a realização da principal.'},
+  {cat:'Cuidado: "pois"',pts:3,sentence:'Você o provocou; não se queixe, <b>pois</b>, de seus ataques.',text:'O "pois" aqui é:',opts:['Explicativa','Conclusiva'],ans:1,exp:'No meio da oração e após seus termos, <b>pois</b> é conclusiva.'},
+  {cat:'Contexto',pts:3,text:'Em qual frase "e" tem sentido adversativo (= mas)?',opts:['Comprei livros e cadernos.','Carlos fala, e não faz nada.','Ela estuda e trabalha.','Ele sorriu e acenou.'],ans:1,exp:'<b>"Carlos fala, e não faz nada"</b> — "e" equivale a "mas".'},
+  {cat:'Contexto',pts:3,text:'Em qual frase "que" é conjunção CAUSAL?',opts:['Diga-lhe que não irei.','Chegou tão cansado que dormiu.','Velho que sou, conheço este caminho.','Esfrega que esfrega, mas não sai.'],ans:2,exp:'<b>"Velho que sou"</b> — "que" equivale a "porque".'},
+];
+
+/* ══ FIREBASE ══ */
+let db=null, gameRef=null;
+
+function loadSaved(){
+  try{
+    const s=localStorage.getItem('bcf:cfg');
+    if(!s){alert('Nenhuma configuração salva encontrada.');return;}
+    const c=JSON.parse(s);
+    Object.entries(c).forEach(([k,v])=>{const el=document.getElementById('f-'+k);if(el)el.value=v;});
+    alert('Configuração carregada! Clique em "Conectar e continuar".');
+  }catch{alert('Erro ao carregar.');}
+}
+
+function initFirebase(){
+  const keys=['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId'];
+  const cfg={};
+  for(const k of keys){
+    const v=document.getElementById('f-'+k).value.trim();
+    if(!v){document.getElementById('cfg-err').style.display='block';return;}
+    cfg[k]=v;
+  }
+  document.getElementById('cfg-err').style.display='none';
+  try{
+    if(firebase.apps.length)firebase.apps.forEach(a=>a.delete());
+    firebase.initializeApp(cfg);
+    db=firebase.database();
+    localStorage.setItem('bcf:cfg',JSON.stringify(cfg));
+    db.ref('.info/connected').on('value',s=>{document.getElementById('cbar').style.display=s.val()?'none':'block';});
+    showScreen('s-land');
+  }catch(e){alert('Erro Firebase:\n'+e.message+'\n\nVerifique os dados.');}
+}
+
+// auto-load saved config
+window.addEventListener('load',()=>{
+  try{
+    const s=localStorage.getItem('bcf:cfg');
+    if(!s)return;
+    Object.entries(JSON.parse(s)).forEach(([k,v])=>{const el=document.getElementById('f-'+k);if(el)el.value=v;});
+  }catch{}
+});
+
+// ── PRÉ-CARREGA AS CREDENCIAIS DO PROJETO ──
+window.addEventListener('load',()=>{
+  const preset={
+    apiKey:'AIzaSyAFj_C2U54DxUraNOSScgXdgX5u5VxVU_c',
+    authDomain:'batalha-das-conjucoes.firebaseapp.com',
+    databaseURL:'https://batalha-das-conjucoes-default-rtdb.firebaseio.com',
+    projectId:'batalha-das-conjucoes',
+    storageBucket:'batalha-das-conjucoes.firebasestorage.app',
+    messagingSenderId:'940690872528',
+    appId:'1:940690872528:web:d9fb8062b4f5d3394c26d5'
+  };
+  Object.entries(preset).forEach(([k,v])=>{const el=document.getElementById('f-'+k);if(el&&!el.value)el.value=v;});
+});
+
+/* ══ STATE ══ */
+let role=null,myGroup=null,myScore=0,myAnswers=[],questions=[],gameMode='quick';
+let groupNames=['Grupo 1','Grupo 2','Grupo 3','Grupo 4'];
+let dashPhase='question',lastQIdx=-1,ggAnswered=false;
+let dTimerRef=null,gTimerRef=null;
+const unsubs=[];
+function unsub(){unsubs.forEach(f=>f());unsubs.length=0;}
+function listen(ref,cb){ref.on('value',cb);unsubs.push(()=>ref.off('value',cb));}
+
+/* ══ UTILS ══ */
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function setMode(el){document.querySelectorAll('.mpill').forEach(p=>p.classList.remove('on'));el.classList.add('on');gameMode=el.dataset.mode;}
+function filterQ(){
+  let p=[...ALL_Q];
+  if(gameMode==='coord')p=p.filter(q=>['Coordenativas','Cuidado: "pois"'].includes(q.cat));
+  else if(gameMode==='sub')p=p.filter(q=>q.cat==='Subordinativas');
+  else if(gameMode==='quick'){p.sort(()=>Math.random()-.5);p=p.slice(0,10);}
+  return p;
+}
+function mkProg(total,cur,id){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=Array.from({length:total},(_,i)=>`<div class="pd ${i<cur?'d':i===cur?'c':''}"></div>`).join('');
+}
+function plusPop(pts){
+  const el=document.createElement('div');el.className='pp';el.textContent='+'+pts;
+  el.style.left=(30+Math.random()*40)+'%';el.style.top='40%';
+  document.body.appendChild(el);setTimeout(()=>el.remove(),1000);
+}
+
+
+/* ══ ROLE ══ */
+function chooseRole(r){
+  if(!db){alert('Configure o Firebase primeiro.');showScreen('s-firebase');return;}
+  role=r;
+  if(r==='teacher')showScreen('s-tsetup');
+  else loadGroupPick();
+}
+
+/* ══ TEACHER ══ */
+async function teacherCreate(){
+  questions=filterQ();
+  const names=[0,1,2,3].map(i=>document.getElementById('gn'+i).value.trim()||`Grupo ${i+1}`);
+  groupNames=names;
+  const sid=Date.now().toString(36);
+  localStorage.setItem('bcf:sid',sid);
+  gameRef=db.ref('sessions/'+sid);
+  await gameRef.child('ctrl').set({phase:'lobby',qIdx:0,qStartedAt:0,groupNames:names,questions,updatedAt:Date.now()});
+  for(let i=0;i<4;i++)await gameRef.child('groups/'+i).set({name:names[i],score:0,answers:[],connected:false});
+  document.getElementById('sess-label').textContent='Sessão: '+sid;
+  renderLobby();showScreen('s-tlobby');
+  listen(gameRef.child('groups'),snap=>{
+    const d=snap.val()||{};renderLobby([0,1,2,3].map(i=>d[i]));
+  });
+}
+
+function renderLobby(groups){
+  document.getElementById('lobby-list').innerHTML=groupNames.map((n,i)=>{
+    const ok=groups&&groups[i]&&groups[i].connected;
+    return `<div class="litem" style="border-color:${ok?COLORS[i]+'66':'var(--border)'}">
+      <div class="ldot" style="background:${ok?COLORS[i]:'rgba(255,255,255,.2)'}"></div>
+      <span style="font-family:'Syne',sans-serif;font-weight:700;flex:1">${n}</span>
+      <span style="font-size:.8rem;color:${ok?COLORS[i]:'var(--muted)'}">${ok?'✓ Conectado':'Aguardando...'}</span>
+    </div>`;
+  }).join('');
+}
+
+async function teacherStart(){
+  unsub();
+  await gameRef.child('ctrl').update({phase:'active',qIdx:0,qStartedAt:Date.now(),updatedAt:Date.now()});
+  dashPhase='question';
+  const snap=await gameRef.child('ctrl').get();
+  renderDash(snap.val());showScreen('s-tdash');
+  listen(gameRef.child('groups'),snap=>{
+    gameRef.child('ctrl').get().then(cs=>renderScoreCol(cs.val()?.qIdx||0,[0,1,2,3].map(i=>(snap.val()||{})[i])));
+  });
+}
+
+function renderDash(ctrl){
+  const q=questions[ctrl.qIdx];
+  document.getElementById('dash-ql').textContent=`Q ${ctrl.qIdx+1}/${questions.length}`;
+  mkProg(questions.length,ctrl.qIdx,'dash-prog');
+  document.getElementById('dp-cat').textContent=q.cat;
+  document.getElementById('dp-pts').textContent=`+${q.pts} pt${q.pts>1?'s':''}`;
+  document.getElementById('dp-text').innerHTML=q.text;
+  const se=document.getElementById('dp-sent');
+  if(q.sentence){se.style.display='';se.innerHTML=q.sentence;}else se.style.display='none';
+  document.getElementById('dp-opts').innerHTML=q.opts.map((o,i)=>
+    `<div class="dopt${dashPhase==='revealed'&&i===q.ans?' ok':''}" id="dpo${i}"><span class="let">${String.fromCharCode(65+i)}</span><span>${o}</span></div>`).join('');
+}
+
+function renderScoreCol(qIdx,groups){
+  document.getElementById('score-col').innerHTML=groups.map((g,i)=>{
+    const has=g&&g.answers&&g.answers.length>qIdx&&g.answers[qIdx]!==null&&g.answers[qIdx]!==undefined;
+    return `<div class="glcard${has?' ans':''}">
+      <div style="width:10px;height:10px;border-radius:50%;background:${COLORS[i]};flex-shrink:0"></div>
+      <div style="flex:1"><div class="gl-name" style="color:${COLORS[i]}">${g?g.name:groupNames[i]}</div>
+      <div>${has?'<span class="ba">✓ Respondeu</span>':'<span class="bw">Pensando...</span>'}</div></div>
+      <div class="gl-score" style="color:${COLORS[i]}">${g?g.score||0:0}</div>
+    </div>`;
+  }).join('');
+}
+
+async function teacherNext(){
+  if(dashPhase==='question'){
+    dashPhase='revealed';
+    const snap=await gameRef.child('ctrl').get();
+    const q=questions[snap.val().qIdx];
+    document.querySelectorAll('[id^="dpo"]').forEach((el,i)=>{if(i===q.ans)el.classList.add('ok');});
+    document.getElementById('btn-nxt').textContent='Próxima pergunta ›';
+    return;
+  }
+  dashPhase='question';
+  document.getElementById('btn-nxt').textContent='Revelar / Próxima ›';
+  const snap=await gameRef.child('ctrl').get();
+  const nxt=(snap.val().qIdx||0)+1;
+  if(nxt>=questions.length){await teacherEnd();return;}
+  await gameRef.child('ctrl').update({qIdx:nxt,qStartedAt:Date.now(),phase:'active',updatedAt:Date.now()});
+  const snap2=await gameRef.child('ctrl').get();renderDash(snap2.val());
+}
+
+async function teacherEnd(){
+  unsub();
+  await gameRef.child('ctrl').update({phase:'end',updatedAt:Date.now()});
+  const gs=await gameRef.child('groups').get();renderFinal(gs.val());
+}
+
+/* ══ GROUP ══ */
+async function loadGroupPick(){
+  const snap=await db.ref('sessions').limitToLast(1).get();
+  if(!snap.exists()){alert('Nenhuma sala criada ainda. Aguarde o professor criar a sala.');return;}
+  const sid=Object.keys(snap.val())[0];
+  gameRef=db.ref('sessions/'+sid);
+  const ctrl=(await gameRef.child('ctrl').get()).val();
+  if(!ctrl){alert('Sala não encontrada. Tente novamente.');return;}
+  groupNames=ctrl.groupNames||groupNames;
+  questions=ctrl.questions||ALL_Q;
+  if(ctrl.phase==='end'){const gs=await gameRef.child('groups').get();renderFinal(gs.val());return;}
+  document.getElementById('gpick-grid').innerHTML=groupNames.map((n,i)=>`
+    <div style="background:var(--card);border:2px solid ${COLORS[i]}66;border-radius:var(--r);padding:1.1rem;cursor:pointer;text-align:center;transition:transform .15s"
+      onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''" onclick="pickGroup(${i})">
+      <div style="width:12px;height:12px;border-radius:50%;background:${COLORS[i]};margin:0 auto .55rem"></div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;color:${COLORS[i]}">${n}</div>
+      <div style="font-size:.77rem;color:var(--muted);margin-top:.25rem">Tocar para entrar</div>
+    </div>`).join('');
+  showScreen('s-gpick');
+}
+
+async function pickGroup(i){
+  myGroup=i;
+  const gd=(await gameRef.child('groups/'+i).get()).val()||{};
+  myScore=gd.score||0;myAnswers=gd.answers||[];
+  await gameRef.child('groups/'+i).update({connected:true,updatedAt:Date.now()});
+  document.getElementById('lobby-pulse').style.background=COLORS[i];
+  document.getElementById('lobby-gname').textContent=groupNames[i];
+  document.getElementById('gg-glabel').textContent=groupNames[i];
+  document.getElementById('gg-glabel').style.color=COLORS[i];
+  document.getElementById('gg-score').textContent=myScore;
+  const ctrl=(await gameRef.child('ctrl').get()).val();
+  if(ctrl.phase==='active'){questions=ctrl.questions||questions;startGroupGame(ctrl);}
+  else if(ctrl.phase==='end'){const gs=await gameRef.child('groups').get();renderFinal(gs.val());}
+  else{
+    showScreen('s-globby');
+    listen(gameRef.child('ctrl'),snap=>{
+      const c=snap.val();if(!c)return;
+      if(c.phase==='active'){unsub();questions=c.questions||questions;startGroupGame(c);}
+      else if(c.phase==='end'){unsub();gameRef.child('groups').get().then(gs=>renderFinal(gs.val()));}
+    });
+  }
+}
+
+function startGroupGame(ctrl){
+  showScreen('s-ggame');
+  renderGroupQ(ctrl.qIdx,ctrl.qStartedAt);lastQIdx=ctrl.qIdx;
+  listen(gameRef.child('ctrl'),snap=>{
+    const c=snap.val();if(!c)return;
+    if(c.phase==='end'){unsub();gameRef.child('groups').get().then(gs=>renderFinal(gs.val()));return;}
+    if(c.qIdx!==lastQIdx){questions=c.questions||questions;renderGroupQ(c.qIdx,c.qStartedAt);}
+  });
+}
+
+function renderGroupQ(qIdx,startedAt){
+  lastQIdx=qIdx;
+  ggAnswered=myAnswers[qIdx]!==undefined&&myAnswers[qIdx]!==null;
+  const q=questions[qIdx],total=questions.length;
+  mkProg(total,qIdx,'gg-prog');
+  document.getElementById('gg-ql').textContent=`Q ${qIdx+1}/${total}`;
+  document.getElementById('gg-score').textContent=myScore;
+  document.getElementById('gg-cat').textContent=q.cat;
+  document.getElementById('gg-pts').textContent=`+${q.pts} pt${q.pts>1?'s':''}`;
+  document.getElementById('gg-text').innerHTML=q.text;
+  const se=document.getElementById('gg-sent');
+  if(q.sentence){se.style.display='';se.innerHTML=q.sentence;}else se.style.display='none';
+  document.getElementById('gg-fb').className='fb';
+  document.getElementById('gg-wait').style.display=ggAnswered?'':'none';
+  document.getElementById('gg-opts').innerHTML=q.opts.map((o,i)=>
+    `<button class="obtn" id="go${i}" onclick="groupAnswer(${i})" ${ggAnswered?'disabled':''}>
+      <span class="olet">${String.fromCharCode(65+i)}</span><span>${o}</span></button>`).join('');
+  if(ggAnswered){
+    const ch=myAnswers[qIdx];
+    document.getElementById('go'+ch).classList.add(ch===q.ans?'ok2':'err2');
+    if(ch!==q.ans)document.getElementById('go'+q.ans).classList.add('ok2');
+    showFb(ch===q.ans?'ok':'err',ch===q.ans?'✓':'✗',ch===q.ans?`<b>Correto!</b> ${q.exp}`:`<b>Incorreto.</b> ${q.exp}`);
+  }
+}
+
+async function groupAnswer(chosen){
+  if(ggAnswered)return;
+  ggAnswered=true;
+  const q=questions[lastQIdx],ok=chosen===q.ans;
+  document.querySelectorAll('.obtn').forEach(b=>b.disabled=true);
+  document.getElementById('go'+chosen).classList.add(ok?'ok2':'err2');
+  if(!ok)document.getElementById('go'+q.ans).classList.add('ok2');
+  if(ok){myScore+=q.pts;plusPop(q.pts);}
+  showFb(ok?'ok':'err',ok?'✓':'✗',ok?`<b>Correto!</b> ${q.exp}`:`<b>Incorreto.</b> ${q.exp}`);
+  document.getElementById('gg-score').textContent=myScore;
+  document.getElementById('gg-wait').style.display='';
+  while(myAnswers.length<=lastQIdx)myAnswers.push(null);
+  myAnswers[lastQIdx]=chosen;
+  await gameRef.child('groups/'+myGroup).update({score:myScore,answers:myAnswers,updatedAt:Date.now()});
+}
+
+function showFb(type,icon,text){
+  const el=document.getElementById('gg-fb');el.className='fb show '+type;
+  document.getElementById('gg-fbi').textContent=icon;
+  document.getElementById('gg-fbt').innerHTML=text;
+}
+
+/* ══ FINAL ══ */
+function renderFinal(gd){
+  unsub();
+  const groups=[0,1,2,3].map(i=>gd?gd[i]:null)
+    .map((g,i)=>({name:g?g.name:groupNames[i],score:g?g.score||0:0,color:COLORS[i]}))
+    .sort((a,b)=>b.score-a.score);
+  const medals=['🥇','🥈','🥉','4️⃣'];
+  document.getElementById('fcards').innerHTML=groups.map((g,r)=>`
+    <div class="fcard" style="border-color:${g.color}55">
+      <div style="font-size:1.8rem;margin-bottom:.35rem">${medals[r]}</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;color:${g.color};margin-bottom:.3rem">${g.name}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:${g.color}">${g.score}</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.15rem">pontos</div>
+    </div>`).join('');
+  showScreen('s-final');
+}
+</script>
+</body>
+</html>
